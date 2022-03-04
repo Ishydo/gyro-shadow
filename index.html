@@ -5,12 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>Moving Blur test</title>
 	<script src="https://cdn.tailwindcss.com"></script>
+	<style>
+		.shadow-img{
+			border-radius: 24px;
+		}
+	</style>
 </head>
 <body class="h-screen">
 
 <div class="h-5/6 flex items-center justify-center p-5">
-	<img id ="img" src="./fraises.png" class="rounded-lg max-w-sm w-4/6 z-10 absolute">
-	<img id="shadow-img" src="./fraises.png" class="blur-xl max-w-sm w-4/6 z-1 absolute">
+	<img id ="img" src="./fraises.png" style="border-radius: 24px;" class="max-w-sm w-4/6 z-10 absolute">
+	<img src="./fraises.png" class="shadow-img blur-xl max-w-sm w-4/6 z-1 absolute opacity-75">
 </div>
 
 <div class="text-xs p-3">
@@ -48,7 +53,7 @@ var iniY = 0;
 var iniZ = 0;
 
 // Manual adjustment when initial offset
-let manualCorrectionBeta = 18;	// Shadow base X offset for shadow
+let manualCorrectionBeta = 30;	// Shadow base X offset for shadow
 let manualCorrectionGamma = 0;	// Shadow base Y offset for shadow
 
 // Offset ratio for main img
@@ -70,7 +75,7 @@ let iniPosImgTop = mainImage.getBoundingClientRect().top;
 let iniPosImgLeft = mainImage.getBoundingClientRect().left;
 
 // Shadow blur image and its initial position
-let shadowImage = document.getElementById("shadow-img");
+let shadowImage = document.getElementsByClassName("shadow-img")[0]
 let iniPosShadowTop = shadowImage.getBoundingClientRect().top;
 let iniPosShadowLeft = shadowImage.getBoundingClientRect().left;
 

@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Moving Blur test</title>
+	<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="h-screen">
+
+<div class="h-5/6 flex items-center justify-center p-5">
+	<img id ="img" src="./fraises.png" class="rounded-lg max-w-sm w-4/6 z-10 absolute">
+	<img id="shadow-img" src="./fraises.png" class="blur-xl max-w-sm w-4/6 z-1 absolute">
+</div>
+
+<div class="text-xs p-3">
+	<p class="mb-5">Inspired by <a href="https://twitter.com/philipcdavis/status/1499436970556071949">@philipcdavis</a></p>
+	<a id="start_demo" class="btn p-2 bg-red-900 text-white rounded-xs mb-4" href="#" role="button">Start the demo</a>
+
+	<p class="my-3">Num. of datapoints: <span id="num-observed-events">0</span></p>
+
+	<ul>
+		<li>X-axis (&beta;): <span id="Orientation_b">0</span><span>&deg;</span></li>
+		<li>Y-axis (&gamma;): <span id="Orientation_g">0</span><span>&deg;</span></li>
+		<li>Z-axis (&alpha;): <span id="Orientation_a">0</span><span>&deg;</span></li>
+	  </ul>
+	  <ul>
+		<li>Initial X-axis (&beta;): <span id="Orientation_b_ini">0</span><span>&deg;</span></li>
+		<li>Initial Y-axis (&gamma;): <span id="Orientation_g_ini">0</span><span>&deg;</span></li>
+		<li>Initial Z-axis (&alpha;): <span id="Orientation_a_ini">0</span><span>&deg;</span></li>
+	  </ul>
+	  <ul>
+		<li>Shadow top offset: <span id="Shadow_top_offset">0</span>px</li>
+		<li>Shadow left offset: <span id="Shadow_left_offset">0</span>px</li>
+	  </ul>
+	  <ul>
+		<li>Img top offset: <span id="Img_top_offset">0</span>px</li>
+		<li>Img left offset: <span id="Img_left_offset">0</span>px</li>
+	  </ul>
+</div>
+
+
+<script>
+
+// Initial phone position
+var iniX = 0;
+var iniY = 0;
+var iniZ = 0;
+
+// Manual adjustment when initial offset
+let manualCorrectionBeta = 18;	// Shadow base X offset for shadow
+let manualCorrectionGamma = 0;	// Shadow base Y offset for shadow
+
+// Offset ratio for main img
+let mainImageTopOffsetRatio = 4;
+let mainImageLeftOffsetRatio = 4;
+
+// TODO
+let minTopOffset = -15;
+let maxTopOffset = 40;
+let minLeftOffset = -40;
+let maxLeftOffset = 40;
+
+let eventCount = 0;
+let counterElement = document.getElementById("num-observed-events")
+
+// Main image and its initial position
+let mainImage = document.getElementById("img");
+let iniPosImgTop = mainImage.getBoundingClientRect().top;
+let iniPosImgLeft = mainImage.getBoundingClientRect().left;
+
+// Shadow blur image and its initial position
+let shadowImage = document.getElementById("shadow-img");
+let iniPosShadowTop = shadowImage.getBoundingClientRect().top;
+let iniPosShadowLeft = shadowImage.getBoundingClientRect().left;
+
+function updateShadowImage(mainImage, shadowImage, beta, gamma) {
+
+	// Moving shadow
+	let topOffset = (iniPosShadowTop) - (beta - iniX) + manualCorrectionBeta;
+	let leftOffset = (iniPosShadowLeft) - (gamma - iniY) + manualCorrectionGamma;
+	shadowImage.style.top = topOffset + "px";
+	shadowImage.style.left = leftOffset + "px";
+
+	// Moving main image
+	let mainTopOffset = (iniPosImgTop) + ((beta - iniX) / mainImageTopOffsetRatio);
+	let mainLeftOffset = (iniPosImgLeft) + ((gamma - iniY) / mainImageLeftOffsetRatio);
+	mainImage.style.top = mainTopOffset + "px";
+	mainImage.style.left = mainLeftOffset + "px";
+
+	updateFieldIfNotNull('Shadow_top_offset', topOffset - iniPosShadowTop);
+  	updateFieldIfNotNull('Shadow_left_offset', leftOffset - iniPosShadowLeft);
+	updateFieldIfNotNull('Img_top_offset', mainTopOffset / mainImageTopOffsetRatio);
+ 	updateFieldIfNotNull('Img_left_offset', mainLeftOffset / mainImageLeftOffsetRatio);
+}
+
+function handleOrientation(event) {
+
+  if(eventCount == 0){
+	  iniX = event.beta;
+	  iniY = event.gamma;
+	  iniZ = event.alpha;
+  }
+
+  updateShadowImage(mainImage, shadowImage, event.beta, event.gamma);
+  updateFieldIfNotNull('Orientation_a', event.alpha - iniZ);
+  updateFieldIfNotNull('Orientation_b', event.beta - iniX);
+  updateFieldIfNotNull('Orientation_g', event.gamma - iniY);
+  updateFieldIfNotNull('Orientation_a_ini', iniZ);
+  updateFieldIfNotNull('Orientation_b_ini', iniX);
+  updateFieldIfNotNull('Orientation_g_ini', iniY);
+  incrementEventCount();
+}
+
+function incrementEventCount(){
+  eventCount = eventCount + 1;
+  counterElement.innerHTML = eventCount;
+}
+
+function updateFieldIfNotNull(fieldName, value, precision=1){
+  if (value != null)
+    document.getElementById(fieldName).innerHTML = value.toFixed(precision);
+}
+
+
+let is_running = false;
+let demo_button = document.getElementById("start_demo");
+demo_button.onclick = function(e) {
+  e.preventDefault();
+  
+  // Request permission for iOS 13+ devices
+  if (
+    DeviceMotionEvent &&
+    typeof DeviceMotionEvent.requestPermission === "function"
+  ) {
+    DeviceMotionEvent.requestPermission();
+  }
+  
+  if (is_running){
+    window.removeEventListener("deviceorientation", handleOrientation);
+    demo_button.innerHTML = "Start demo";
+    demo_button.classList.add('btn-success');
+    demo_button.classList.remove('btn-danger');
+    is_running = false;
+  }else{
+    window.addEventListener("deviceorientation", handleOrientation);
+    document.getElementById("start_demo").innerHTML = "Stop demo";
+    demo_button.classList.remove('btn-success');
+    demo_button.classList.add('btn-danger');
+    is_running = true;
+  }
+};
+
+
+</script>
+</body>
+</html>
